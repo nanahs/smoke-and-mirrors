@@ -1,5 +1,6 @@
 import "./style.css"
 import { Elm } from "./src/Main.elm"
+import "elm-canvas"
 
-const root = document.querySelector("#app")
-const app = Elm.Main.init({node: root});
+const node = document.querySelector("main")
+const app = Elm.Main.init({node: node});

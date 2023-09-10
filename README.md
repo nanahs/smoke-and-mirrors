@@ -1,5 +1,9 @@
 # README
 
+Smoke and Mirrors
+
+[elm-game-jam-6](https://itch.io/jam/elm-game-jam-6)
+
 ## prereqs
 
 - Install software dependencies using ASDF (see .tool-versions file)\

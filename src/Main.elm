@@ -1,13 +1,22 @@
 module Main exposing (Msg(..), main)
 
 import Browser
+import Browser.Events as Events
+import Canvas
+import Canvas.Settings as CanvasSettings
+import Canvas.Settings.Advanced as CanvasSettings
+import Color
 import Html exposing (Html)
 import Html.Attributes as Attributes
 import Html.Events as Events
 
 
+
+-- MODEL
+
+
 type alias Model =
-    { count : Int
+    { count : Float
     }
 
 
@@ -16,50 +25,86 @@ init =
     ( { count = 0 }, Cmd.none )
 
 
-view : Model -> Html Msg
-view model =
-    Html.div [ Attributes.class "flex flex-col items-center" ]
-        [ Html.h1 [ Attributes.class "text-4xl font-bold text-blue-500" ] [ Html.text "Vite and Elm starter" ]
-        , Html.div [ Attributes.class "flex flex-col items-center" ]
-            [ Html.button
-                [ Events.onClick Increment
-                , Attributes.class "border px-8 hover:bg-slate-200"
-                ]
-                [ Html.text "+1" ]
-            , Html.div [] [ Html.text (String.fromInt model.count) ]
-            , Html.button
-                [ Events.onClick Decrement
-                , Attributes.class "border px-8 hover:bg-slate-200"
-                ]
-                [ Html.text "-1" ]
-            ]
-        ]
+width : Float
+width =
+    200
+
+
+height : Float
+height =
+    200
 
 
 type Msg
-    = Increment
-    | Decrement
+    = Frame Float
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Increment ->
+        Frame _ ->
             ( { model | count = model.count + 1 }, Cmd.none )
 
-        Decrement ->
-            ( { model | count = model.count - 1 }, Cmd.none )
+
+
+-- VIEWS
+
+
+view : Model -> Html Msg
+view model =
+    Html.div [ Attributes.class "flex flex-col items-center" ]
+        [ Html.h1 [ Attributes.class "text-4xl font-bold text-gray-500" ] [ Html.text "Smoke and Mirrors" ]
+        , Canvas.toHtml
+            ( 200, 200 )
+            [ Attributes.class "border-4 border-black" ]
+            [ clear
+            , render model.count
+            ]
+        ]
+
+
+clear : Canvas.Renderable
+clear =
+    Canvas.shapes [ CanvasSettings.fill Color.white ] [ Canvas.rect ( 0, 0 ) width height ]
+
+
+render : number -> Canvas.Renderable
+render count =
+    let
+        size =
+            width / 3
+
+        x =
+            -(size / 2)
+
+        y =
+            -(size / 2)
+
+        rotation =
+            degrees (count * 3)
+
+        hue =
+            toFloat (count / 4 |> floor |> modBy 100) / 100
+    in
+    Canvas.shapes
+        [ CanvasSettings.transform
+            [ CanvasSettings.translate (width / 2) (height / 2)
+            , CanvasSettings.rotate rotation
+            ]
+        , CanvasSettings.fill (Color.hsl hue 0.3 0.7)
+        ]
+        [ Canvas.rect ( x, y ) size size ]
+
+
+
+-- PROGRAM
 
 
 main : Program () Model Msg
 main =
-    Browser.document
+    Browser.element
         { init = \_ -> init
         , update = update
-        , view =
-            \model ->
-                { title = "elm-template"
-                , body = [ view model ]
-                }
-        , subscriptions = \_ -> Sub.none
+        , view = \model -> view model
+        , subscriptions = \_ -> Events.onAnimationFrameDelta Frame
         }
