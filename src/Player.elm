@@ -1,9 +1,12 @@
-module Player exposing (Player, height, init, position, render, setVelocity, toBounds, updatePosition, velocity, width)
+module Player exposing (Player, height, init, position, render, toBounds, update, width)
 
+import AssocSet exposing (Set)
 import BoundingBox exposing (BoundingBox)
 import Canvas
 import Canvas.Settings as CanvasSettings
 import Color
+import Constants
+import Input exposing (Input)
 import Vector2 exposing (Vector2)
 
 
@@ -53,21 +56,14 @@ position (Player player) =
     player.position
 
 
-velocity : Player -> Vector2
-velocity (Player player) =
-    player.velocity
-
-
-setVelocity : Vector2 -> Player -> Player
-setVelocity newVelocity (Player player) =
-    Player { player | velocity = newVelocity }
-
-
-updatePosition : Float -> { minX : Float, maxX : Float, minY : Float, maxY : Float } -> Player -> Player
-updatePosition delta bounds (Player player) =
+update : Float -> Set Input -> Player -> Player
+update delta inputs (Player player) =
     let
+        velocity =
+            Input.applyInputs inputs
+
         scaledVelocity =
-            Vector2.scale (delta * speed) player.velocity
+            Vector2.scale (delta * speed) velocity
 
         newPos =
             Vector2.add player.position scaledVelocity
@@ -87,6 +83,11 @@ toBounds (Player player) =
     , minY = y
     , maxY = y + height
     }
+
+
+bounds : { minX : Float, maxX : Float, minY : Float, maxY : Float }
+bounds =
+    Constants.gameBounds width
 
 
 

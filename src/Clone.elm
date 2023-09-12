@@ -1,4 +1,4 @@
-module Clone exposing (Clone, init, position, render, setVelocity, toBounds, update, velocity)
+module Clone exposing (Clone, init, render, toBounds, update)
 
 import AssocSet as Set exposing (Set)
 import BoundingBox exposing (BoundingBox)
@@ -53,33 +53,13 @@ init position_ =
         }
 
 
-position : Clone -> Vector2
-position (Clone clone) =
-    clone.position
-
-
-velocity : Clone -> Vector2
-velocity (Clone clone) =
-    clone.velocity
-
-
-setVelocity : Vector2 -> Clone -> Clone
-setVelocity newVelocity (Clone clone) =
-    Clone { clone | velocity = newVelocity }
-
-
 update : Float -> Set Input -> Clone -> Clone
 update delta newInputs (Clone clone) =
     let
         maybevelocity =
             clone.inputs
                 |> Queue.head
-                |> Maybe.map
-                    (\inputs ->
-                        inputs
-                            |> Set.toList
-                            |> List.foldl applyMovementInput Vector2.zero
-                    )
+                |> Maybe.map Input.applyInputs
 
         scaledVelocity =
             case maybevelocity of
@@ -113,11 +93,6 @@ toBounds (Clone clone) =
     , minY = y
     , maxY = y + height
     }
-
-
-applyMovementInput : Input -> Vector2 -> Vector2
-applyMovementInput input accPos =
-    Vector2.add (Input.toVector2 input) accPos
 
 
 

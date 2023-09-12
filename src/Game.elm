@@ -9,6 +9,7 @@ import Canvas.Settings as CanvasSettings
 import Canvas.Settings.Advanced as CanvasSettings
 import Clone exposing (Clone)
 import Color
+import Constants
 import Enemy exposing (Enemy)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -16,7 +17,7 @@ import Html.Events as Events
 import Input exposing (Input)
 import Mirror exposing (Mirror)
 import Player exposing (Player)
-import Vector2 exposing (Vector2)
+import Vector2
 
 
 type Model
@@ -37,7 +38,7 @@ type alias Internals =
 init : ( Model, Cmd Msg )
 init =
     ( Model
-        { player = Player.init ( width / 2, height / 10 )
+        { player = Player.init ( Constants.gameWidth / 2, Constants.gameHeight / 10 )
         , inputs = Set.empty
         , bullets = []
         , shootTimer = 0
@@ -54,16 +55,6 @@ init =
     )
 
 
-width : Float
-width =
-    400
-
-
-height : Float
-height =
-    400
-
-
 shootDelay : Float
 shootDelay =
     0.1
@@ -72,15 +63,6 @@ shootDelay =
 canShoot : Internals -> Bool
 canShoot model =
     model.shootTimer <= 0
-
-
-bounds : { minX : Float, maxX : Float, minY : Float, maxY : Float }
-bounds =
-    { minX = 0
-    , maxX = width - Player.width
-    , minY = 0
-    , maxY = height / 4
-    }
 
 
 type Msg
@@ -105,14 +87,7 @@ update msg (Model model) =
             in
             ( Model
                 { model
-                    | player =
-                        model.inputs
-                            |> Set.toList
-                            |> List.foldl applyMovementInput Vector2.zero
-                            |> (\velocity ->
-                                    Player.setVelocity velocity model.player
-                                        |> Player.updatePosition deltaTime_ bounds
-                               )
+                    | player = Player.update deltaTime_ model.inputs model.player
                     , bullets = List.map (Bullet.updatePosition deltaTime_) model.bullets
                     , shootTimer =
                         if not (canShoot model) then
@@ -158,11 +133,6 @@ update msg (Model model) =
             )
 
 
-applyMovementInput : Input -> Vector2 -> Vector2
-applyMovementInput input accPos =
-    Vector2.add (Input.toVector2 input) accPos
-
-
 filterEnemies : List Bullet -> List Enemy -> List Enemy
 filterEnemies bullets enemies =
     enemies
@@ -190,7 +160,7 @@ view : Model -> Html Msg
 view (Model model) =
     div [ class "flex flex-col items-center" ]
         [ Canvas.toHtml
-            ( floor height, floor width )
+            ( floor Constants.gameHeight, floor Constants.gameWidth )
             [ class "border-2 border-gray-500" ]
             [ clear
             , Canvas.group
@@ -228,7 +198,7 @@ viewInput input =
 
 clear : Canvas.Renderable
 clear =
-    Canvas.shapes [ CanvasSettings.fill Color.white ] [ Canvas.rect ( 0, 0 ) width height ]
+    Canvas.shapes [ CanvasSettings.fill Color.white ] [ Canvas.rect ( 0, 0 ) Constants.gameWidth Constants.gameHeight ]
 
 
 

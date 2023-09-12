@@ -1,4 +1,4 @@
-module Bullet exposing (Bullet, init, position, render, toBounds, updatePosition, velocity)
+module Bullet exposing (Bullet, init, render, toBounds, updatePosition, velocity)
 
 import BoundingBox exposing (BoundingBox)
 import Canvas
@@ -44,11 +44,6 @@ init position_ =
         { position = Vector2.create { x = Tuple.first position_, y = Tuple.second position_ }
         , velocity = Vector2.create { x = 0, y = 1 }
         }
-
-
-position : Bullet -> Vector2
-position (Bullet bullet) =
-    bullet.position
 
 
 velocity : Bullet -> Vector2

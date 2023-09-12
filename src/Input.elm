@@ -1,5 +1,6 @@
-module Input exposing (Input(..), decoder, toString, toVector2)
+module Input exposing (Input(..), applyInputs, decoder, toString, toVector2)
 
+import AssocSet as Set exposing (Set)
 import Json.Decode as Decode exposing (Decoder)
 import Vector2 exposing (Vector2)
 
@@ -52,6 +53,18 @@ toVector2 input =
 
         Shoot ->
             Vector2.zero
+
+
+applyInputs : Set Input -> Vector2
+applyInputs inputs =
+    inputs
+        |> Set.toList
+        |> List.foldl applyMovementInput Vector2.zero
+
+
+applyMovementInput : Input -> Vector2 -> Vector2
+applyMovementInput input accPos =
+    Vector2.add (toVector2 input) accPos
 
 
 
