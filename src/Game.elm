@@ -28,7 +28,6 @@ type alias Internals =
     { player : Player
     , inputs : Set Input
     , bullets : List Bullet
-    , shootTimer : Float
     , mirrors : List Mirror
     , enemies : List Enemy
     , clone : Maybe Clone
@@ -41,7 +40,6 @@ init =
         { player = Player.init ( Constants.gameWidth / 2, Constants.gameHeight / 10 )
         , inputs = Set.empty
         , bullets = []
-        , shootTimer = 0
         , clone = Nothing
         , mirrors = [ Mirror.init ( 50, 50 ) ]
         , enemies =
@@ -53,16 +51,6 @@ init =
         }
     , Cmd.none
     )
-
-
-shootDelay : Float
-shootDelay =
-    0.1
-
-
-canShoot : Internals -> Bool
-canShoot model =
-    model.shootTimer <= 0
 
 
 type Msg
@@ -84,17 +72,18 @@ update msg (Model model) =
 
                 addClone =
                     List.length model.mirrors - List.length newMirrors > 0
+
+                ( newPlayer, maybeBullet ) =
+                    Player.update deltaTime_ model.inputs model.player
             in
             ( Model
                 { model
-                    | player = Player.update deltaTime_ model.inputs model.player
-                    , bullets = List.map (Bullet.updatePosition deltaTime_) model.bullets
-                    , shootTimer =
-                        if not (canShoot model) then
-                            model.shootTimer - deltaTime_
-
-                        else
-                            model.shootTimer
+                    | player = newPlayer
+                    , bullets =
+                        maybeBullet
+                            |> Maybe.map (\bullet -> bullet :: model.bullets)
+                            |> Maybe.withDefault model.bullets
+                            |> List.map (Bullet.updatePosition deltaTime_)
                     , mirrors = newMirrors
                     , clone =
                         if addClone then
@@ -108,22 +97,7 @@ update msg (Model model) =
             )
 
         InputDown input ->
-            ( Model
-                { model
-                    | inputs = Set.insert input model.inputs
-                    , bullets =
-                        if input == Input.Shoot && canShoot model then
-                            Bullet.init (Vector2.toTuple (Player.position model.player)) :: model.bullets
-
-                        else
-                            model.bullets
-                    , shootTimer =
-                        if input == Input.Shoot && canShoot model then
-                            shootDelay
-
-                        else
-                            model.shootTimer
-                }
+            ( Model { model | inputs = Set.insert input model.inputs }
             , Cmd.none
             )
 

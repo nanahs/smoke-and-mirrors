@@ -1,7 +1,8 @@
 module Player exposing (Player, height, init, position, render, toBounds, update, width)
 
-import AssocSet exposing (Set)
+import AssocSet as Set exposing (Set)
 import BoundingBox exposing (BoundingBox)
+import Bullet exposing (Bullet)
 import Canvas
 import Canvas.Settings as CanvasSettings
 import Color
@@ -40,6 +41,7 @@ type Player
 type alias Internals =
     { position : Vector2
     , velocity : Vector2
+    , shootTimer : Float
     }
 
 
@@ -48,6 +50,7 @@ init position_ =
     Player
         { position = Vector2.create { x = Tuple.first position_, y = Tuple.second position_ }
         , velocity = Vector2.zero
+        , shootTimer = 0
         }
 
 
@@ -56,7 +59,7 @@ position (Player player) =
     player.position
 
 
-update : Float -> Set Input -> Player -> Player
+update : Float -> Set Input -> Player -> ( Player, Maybe Bullet )
 update delta inputs (Player player) =
     let
         velocity =
@@ -69,7 +72,25 @@ update delta inputs (Player player) =
             Vector2.add player.position scaledVelocity
                 |> Vector2.bounds bounds
     in
-    Player { player | position = newPos }
+    ( Player
+        { player
+            | position = newPos
+            , shootTimer =
+                if not (canShoot player) then
+                    player.shootTimer - delta
+
+                else if Set.member Input.Shoot inputs && canShoot player then
+                    shootDelay
+
+                else
+                    player.shootTimer
+        }
+    , if Set.member Input.Shoot inputs && canShoot player then
+        Just (Bullet.init player.position)
+
+      else
+        Nothing
+    )
 
 
 toBounds : Player -> BoundingBox
@@ -88,6 +109,16 @@ toBounds (Player player) =
 bounds : { minX : Float, maxX : Float, minY : Float, maxY : Float }
 bounds =
     Constants.gameBounds width
+
+
+shootDelay : Float
+shootDelay =
+    0.1
+
+
+canShoot : Internals -> Bool
+canShoot model =
+    model.shootTimer <= 0
 
 
 

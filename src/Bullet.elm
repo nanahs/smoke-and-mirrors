@@ -38,10 +38,10 @@ type alias Internals =
     }
 
 
-init : ( Float, Float ) -> Bullet
+init : Vector2 -> Bullet
 init position_ =
     Bullet
-        { position = Vector2.create { x = Tuple.first position_, y = Tuple.second position_ }
+        { position = position_
         , velocity = Vector2.create { x = 0, y = 1 }
         }
 
