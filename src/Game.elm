@@ -1,6 +1,7 @@
 module Game exposing (Model, Msg, init, subscriptions, update, view)
 
 import AssocSet as Set exposing (Set)
+import BoundingBox exposing (BoundingBox)
 import Browser.Events as Events
 import Bullet exposing (Bullet)
 import Canvas
@@ -26,7 +27,8 @@ type alias Internals =
     , bullets : List Bullet
     , shootTimer : Float
     , cloneCount : Int
-    , mirrors : List Mirror
+    , mirrors : Mirror
+    , hasOverlap : Bool
     }
 
 
@@ -38,7 +40,8 @@ init =
         , bullets = []
         , shootTimer = 0
         , cloneCount = 0
-        , mirrors = [ Mirror.init ]
+        , mirrors = Mirror.init
+        , hasOverlap = False
         }
     , Cmd.none
     )
@@ -56,7 +59,7 @@ height =
 
 shootDelay : Float
 shootDelay =
-    0.5
+    0.1
 
 
 canShoot : Internals -> Bool
@@ -67,7 +70,7 @@ canShoot model =
 bounds : { minX : Float, maxX : Float, minY : Float, maxY : Float }
 bounds =
     { minX = 0
-    , maxX = width
+    , maxX = width - Player.width
     , minY = 0
     , maxY = height / 4
     }
@@ -104,6 +107,8 @@ update msg (Model model) =
 
                                 else
                                     model.shootTimer
+                            , hasOverlap =
+                                BoundingBox.overlaps (Mirror.toBounds model.mirrors) (Player.toBounds model.player)
                         }
                    )
                 |> Model
@@ -155,11 +160,16 @@ view (Model model) =
                 ]
               <|
                 List.concat
-                    [ [ Player.render_ model.player ]
+                    [ [ Player.render model.player ]
                     , List.map Bullet.render model.bullets
-                    , List.map Mirror.render model.mirrors
+                    , [ Mirror.render model.mirrors ]
                     ]
             ]
+        , if model.hasOverlap then
+            div [] [ text "overlap" ]
+
+          else
+            div [] [ text "no" ]
         , viewInputs model.inputs
         ]
 

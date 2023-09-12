@@ -1,5 +1,6 @@
-module Player exposing (Player, init, position, render, render_, setVelocity, updatePosition, velocity)
+module Player exposing (Player, height, init, position, render, render_, setVelocity, toBounds, updatePosition, velocity, width)
 
+import BoundingBox exposing (BoundingBox)
 import Canvas
 import Vector2 exposing (Vector2)
 
@@ -73,6 +74,19 @@ updatePosition delta bounds (Player player) =
     Player { player | position = newPos }
 
 
+toBounds : Player -> BoundingBox
+toBounds (Player player) =
+    let
+        ( x, y ) =
+            Vector2.toTuple player.position
+    in
+    { minX = x
+    , maxX = x + width
+    , minY = y
+    , maxY = y + height
+    }
+
+
 
 -- VIEW
 
@@ -80,7 +94,7 @@ updatePosition delta bounds (Player player) =
 render : Player -> Canvas.Shape
 render (Player player) =
     Canvas.rect
-        (drawOffset ( Vector2.getX player.position, Vector2.getY player.position ) width height)
+        ( Vector2.getX player.position, Vector2.getY player.position )
         width
         height
 

@@ -1,5 +1,6 @@
-module Mirror exposing (Mirror, init, render)
+module Mirror exposing (Mirror, init, render, toBounds)
 
+import BoundingBox exposing (BoundingBox)
 import Canvas
 import Vector2 exposing (Vector2)
 
@@ -32,6 +33,11 @@ init =
     Mirror { position = Vector2.create { x = 50, y = 50 } }
 
 
+toBounds : Mirror -> BoundingBox
+toBounds (Mirror mirror) =
+    BoundingBox.fromPointHeightWidth (Vector2.toTuple mirror.position) height width
+
+
 
 -- View
 
@@ -39,7 +45,7 @@ init =
 render : Mirror -> Canvas.Shape
 render (Mirror mirror) =
     Canvas.rect
-        (drawOffset ( Vector2.getX mirror.position, Vector2.getY mirror.position ) width height)
+        ( Vector2.getX mirror.position, Vector2.getY mirror.position )
         width
         height
 
