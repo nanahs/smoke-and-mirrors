@@ -12,7 +12,8 @@
             "elm/html": "1.0.0",
             "elm/json": "1.1.3",
             "erlandsona/assoc-set": "1.1.2",
-            "joakin/elm-canvas": "5.0.0"
+            "joakin/elm-canvas": "5.0.0",
+            "kudzu-forest/elm-constant-time-queue": "1.2.2"
         },
         "indirect": {
             "elm/time": "1.0.0",

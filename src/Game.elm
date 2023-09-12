@@ -1,7 +1,7 @@
 module Game exposing (Model, Msg, init, subscriptions, update, view)
 
 import AssocSet as Set exposing (Set)
-import BoundingBox exposing (BoundingBox)
+import BoundingBox
 import Browser.Events as Events
 import Bullet exposing (Bullet)
 import Canvas
@@ -15,6 +15,7 @@ import Html.Events as Events
 import Input exposing (Input)
 import Mirror exposing (Mirror)
 import Player exposing (Player)
+import Queue exposing (Queue)
 import Vector2 exposing (Vector2)
 
 
@@ -27,9 +28,8 @@ type alias Internals =
     , inputs : Set Input
     , bullets : List Bullet
     , shootTimer : Float
-    , cloneCount : Int
+    , clone : Queue (List (Set Input))
     , mirrors : List Mirror
-    , hasOverlap : Bool
     , enemies : List Enemy
     }
 
@@ -41,9 +41,8 @@ init =
         , inputs = Set.empty
         , bullets = []
         , shootTimer = 0
-        , cloneCount = 0
-        , mirrors = [ Mirror.init ( 50, 50 ), Mirror.init ( 150, 50 ) ]
-        , hasOverlap = False
+        , clone = Queue.empty
+        , mirrors = [ Mirror.init ( 50, 50 ) ]
         , enemies =
             [ Enemy.init ( 25, 350 )
             , Enemy.init ( 75, 375 )
@@ -97,46 +96,39 @@ update msg (Model model) =
             let
                 deltaTime_ =
                     deltaTime * 0.001
+
+                newMirrors =
+                    filterMirrors model.player model.mirrors
+
+                addClone =
+                    List.length model.mirrors - List.length newMirrors > 0
             in
-            ( model.inputs
-                |> Set.toList
-                |> List.foldl applyMovementInput Vector2.zero
-                |> (\velocity ->
-                        let
-                            newMirrors =
-                                List.filter (not << BoundingBox.overlaps (Player.toBounds model.player) << Mirror.toBounds) model.mirrors
+            ( Model
+                { model
+                    | player =
+                        model.inputs
+                            |> Set.toList
+                            |> List.foldl applyMovementInput Vector2.zero
+                            |> (\velocity ->
+                                    Player.setVelocity velocity model.player
+                                        |> Player.updatePosition deltaTime_ bounds
+                               )
+                    , bullets = List.map (Bullet.updatePosition deltaTime_) model.bullets
+                    , shootTimer =
+                        if not (canShoot model) then
+                            model.shootTimer - deltaTime_
 
-                            newEnemies =
-                                model.enemies
-                                    |> List.filter
-                                        (\e ->
-                                            not <| List.any (\bullet -> BoundingBox.overlaps (Enemy.toBounds e) (Bullet.toBounds bullet)) model.bullets
-                                        )
-                        in
-                        { model
-                            | player =
-                                model.player
-                                    |> Player.setVelocity velocity
-                                    |> Player.updatePosition deltaTime_ bounds
-                            , bullets =
-                                List.map (Bullet.updatePosition deltaTime_) model.bullets
-                            , shootTimer =
-                                if not (canShoot model) then
-                                    model.shootTimer - deltaTime_
+                        else
+                            model.shootTimer
+                    , mirrors = newMirrors
+                    , clone =
+                        if addClone then
+                            Queue.fromListFIFO [ List.repeat 25 Set.empty ]
 
-                                else
-                                    model.shootTimer
-                            , mirrors =
-                                newMirrors
-                            , hasOverlap =
-                                model.mirrors /= newMirrors
-                            , cloneCount =
-                                model.cloneCount + List.length model.mirrors - List.length newMirrors
-                            , enemies =
-                                newEnemies
-                        }
-                   )
-                |> Model
+                        else
+                            model.clone
+                    , enemies = filterEnemies model.bullets model.enemies
+                }
             , Cmd.none
             )
 
@@ -171,6 +163,29 @@ applyMovementInput input accPos =
     Vector2.add (Input.toVector2 input) accPos
 
 
+filterEnemies : List Bullet -> List Enemy -> List Enemy
+filterEnemies bullets enemies =
+    enemies
+        |> List.filter
+            (\enemy ->
+                not <|
+                    List.any
+                        (\bullet ->
+                            BoundingBox.overlaps (Enemy.toBounds enemy) (Bullet.toBounds bullet)
+                        )
+                        bullets
+            )
+
+
+filterMirrors : Player -> List Mirror -> List Mirror
+filterMirrors player mirrors =
+    List.filter (not << BoundingBox.overlaps (Player.toBounds player) << Mirror.toBounds) mirrors
+
+
+
+-- View
+
+
 view : Model -> Html Msg
 view (Model model) =
     div [ class "flex flex-col items-center" ]
@@ -180,8 +195,7 @@ view (Model model) =
             [ clear
             , Canvas.group
                 [ CanvasSettings.transform
-                    [ CanvasSettings.applyMatrix { m11 = 1, m12 = 0, m21 = 0, m22 = -1, dx = 0, dy = 400 }
-                    ]
+                    [ CanvasSettings.applyMatrix { m11 = 1, m12 = 0, m21 = 0, m22 = -1, dx = 0, dy = 400 } ]
                 ]
                 [ Player.render model.player
                 , Canvas.group [] (List.map Bullet.render model.bullets)
@@ -189,11 +203,6 @@ view (Model model) =
                 , Canvas.group [] (List.map Enemy.render model.enemies)
                 ]
             ]
-        , if model.hasOverlap then
-            div [] [ text "overlap" ]
-
-          else
-            div [] [ text "no" ]
         , viewInputs model.inputs
         ]
 
@@ -214,6 +223,10 @@ viewInput input =
 clear : Canvas.Renderable
 clear =
     Canvas.shapes [ CanvasSettings.fill Color.white ] [ Canvas.rect ( 0, 0 ) width height ]
+
+
+
+-- Subscriptions
 
 
 subscriptions : Model -> Sub Msg
