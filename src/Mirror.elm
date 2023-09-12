@@ -10,12 +10,12 @@ import Vector2 exposing (Vector2)
 
 height : Float
 height =
-    50
+    25
 
 
 width : Float
 width =
-    50
+    25
 
 
 type Mirror

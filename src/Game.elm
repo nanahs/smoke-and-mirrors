@@ -26,6 +26,7 @@ type alias Internals =
     , bullets : List Bullet
     , shootTimer : Float
     , cloneCount : Int
+    , mirrors : List Mirror
     }
 
 
@@ -37,6 +38,7 @@ init =
         , bullets = []
         , shootTimer = 0
         , cloneCount = 0
+        , mirrors = [ Mirror.init ]
         }
     , Cmd.none
     )
@@ -151,7 +153,12 @@ view (Model model) =
                     [ CanvasSettings.applyMatrix { m11 = 1, m12 = 0, m21 = 0, m22 = -1, dx = 0, dy = 400 }
                     ]
                 ]
-                (Player.render_ model.player :: List.map Bullet.render model.bullets)
+              <|
+                List.concat
+                    [ [ Player.render_ model.player ]
+                    , List.map Bullet.render model.bullets
+                    , List.map Mirror.render model.mirrors
+                    ]
             ]
         , viewInputs model.inputs
         ]
