@@ -2,6 +2,8 @@ module Mirror exposing (Mirror, init, render, toBounds)
 
 import BoundingBox exposing (BoundingBox)
 import Canvas
+import Canvas.Settings as CanvasSettings
+import Color
 import Vector2 exposing (Vector2)
 
 
@@ -28,9 +30,9 @@ type alias Internals =
     }
 
 
-init : Mirror
-init =
-    Mirror { position = Vector2.create { x = 50, y = 50 } }
+init : ( Float, Float ) -> Mirror
+init ( x, y ) =
+    Mirror { position = Vector2.create { x = x, y = y } }
 
 
 toBounds : Mirror -> BoundingBox
@@ -42,15 +44,11 @@ toBounds (Mirror mirror) =
 -- View
 
 
-render : Mirror -> Canvas.Shape
+render : Mirror -> Canvas.Renderable
 render (Mirror mirror) =
-    Canvas.rect
-        ( Vector2.getX mirror.position, Vector2.getY mirror.position )
-        width
-        height
-
-
-drawOffset : ( Float, Float ) -> Float -> Float -> ( Float, Float )
-drawOffset position_ width_ height_ =
-    position_
-        |> Tuple.mapBoth (\x -> x - (width_ / 2)) (\y -> y - (height_ / 2))
+    Canvas.shapes [ CanvasSettings.fill Color.gray ]
+        [ Canvas.rect
+            ( Vector2.getX mirror.position, Vector2.getY mirror.position )
+            width
+            height
+        ]

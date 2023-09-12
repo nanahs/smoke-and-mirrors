@@ -8,6 +8,7 @@ import Canvas
 import Canvas.Settings as CanvasSettings
 import Canvas.Settings.Advanced as CanvasSettings
 import Color
+import Enemy exposing (Enemy)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events as Events
@@ -27,8 +28,9 @@ type alias Internals =
     , bullets : List Bullet
     , shootTimer : Float
     , cloneCount : Int
-    , mirrors : Mirror
+    , mirrors : List Mirror
     , hasOverlap : Bool
+    , enemies : List Enemy
     }
 
 
@@ -40,8 +42,14 @@ init =
         , bullets = []
         , shootTimer = 0
         , cloneCount = 0
-        , mirrors = Mirror.init
+        , mirrors = [ Mirror.init ( 50, 50 ), Mirror.init ( 150, 50 ) ]
         , hasOverlap = False
+        , enemies =
+            [ Enemy.init ( 25, 350 )
+            , Enemy.init ( 75, 375 )
+            , Enemy.init ( 125, 325 )
+            , Enemy.init ( 300, 350 )
+            ]
         }
     , Cmd.none
     )
@@ -94,6 +102,17 @@ update msg (Model model) =
                 |> Set.toList
                 |> List.foldl applyMovementInput Vector2.zero
                 |> (\velocity ->
+                        let
+                            newMirrors =
+                                List.filter (not << BoundingBox.overlaps (Player.toBounds model.player) << Mirror.toBounds) model.mirrors
+
+                            newEnemies =
+                                model.enemies
+                                    |> List.filter
+                                        (\e ->
+                                            not <| List.any (\bullet -> BoundingBox.overlaps (Enemy.toBounds e) (Bullet.toBounds bullet)) model.bullets
+                                        )
+                        in
                         { model
                             | player =
                                 model.player
@@ -107,8 +126,14 @@ update msg (Model model) =
 
                                 else
                                     model.shootTimer
+                            , mirrors =
+                                newMirrors
                             , hasOverlap =
-                                BoundingBox.overlaps (Mirror.toBounds model.mirrors) (Player.toBounds model.player)
+                                model.mirrors /= newMirrors
+                            , cloneCount =
+                                model.cloneCount + List.length model.mirrors - List.length newMirrors
+                            , enemies =
+                                newEnemies
                         }
                    )
                 |> Model
@@ -153,17 +178,16 @@ view (Model model) =
             ( floor height, floor width )
             [ class "border-2 border-gray-500" ]
             [ clear
-            , Canvas.shapes
+            , Canvas.group
                 [ CanvasSettings.transform
                     [ CanvasSettings.applyMatrix { m11 = 1, m12 = 0, m21 = 0, m22 = -1, dx = 0, dy = 400 }
                     ]
                 ]
-              <|
-                List.concat
-                    [ [ Player.render model.player ]
-                    , List.map Bullet.render model.bullets
-                    , [ Mirror.render model.mirrors ]
-                    ]
+                [ Player.render model.player
+                , Canvas.group [] (List.map Bullet.render model.bullets)
+                , Canvas.group [] (List.map Mirror.render model.mirrors)
+                , Canvas.group [] (List.map Enemy.render model.enemies)
+                ]
             ]
         , if model.hasOverlap then
             div [] [ text "overlap" ]

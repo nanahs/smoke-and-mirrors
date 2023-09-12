@@ -1,5 +1,6 @@
-module Bullet exposing (..)
+module Bullet exposing (Bullet, init, position, render, toBounds, updatePosition, velocity)
 
+import BoundingBox exposing (BoundingBox)
 import Canvas
 import Vector2 exposing (Vector2)
 
@@ -69,19 +70,28 @@ updatePosition delta (Bullet bullet) =
     Bullet { bullet | position = newPos }
 
 
+toBounds : Bullet -> BoundingBox
+toBounds (Bullet enemey) =
+    let
+        ( x, y ) =
+            Vector2.toTuple enemey.position
+    in
+    { minX = x
+    , maxX = x + width
+    , minY = y
+    , maxY = y + height
+    }
+
+
 
 -- View
 
 
-render : Bullet -> Canvas.Shape
+render : Bullet -> Canvas.Renderable
 render (Bullet bullet) =
-    Canvas.rect
-        (drawOffset ( Vector2.getX bullet.position, Vector2.getY bullet.position ) width height)
-        width
-        height
-
-
-drawOffset : ( Float, Float ) -> Float -> Float -> ( Float, Float )
-drawOffset position_ width_ height_ =
-    position_
-        |> Tuple.mapBoth (\x -> x - (width_ / 2)) (\y -> y - (height_ / 2))
+    Canvas.shapes []
+        [ Canvas.rect
+            ( Vector2.getX bullet.position, Vector2.getY bullet.position )
+            width
+            height
+        ]

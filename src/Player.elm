@@ -1,7 +1,9 @@
-module Player exposing (Player, height, init, position, render, render_, setVelocity, toBounds, updatePosition, velocity, width)
+module Player exposing (Player, height, init, position, render, setVelocity, toBounds, updatePosition, velocity, width)
 
 import BoundingBox exposing (BoundingBox)
 import Canvas
+import Canvas.Settings as CanvasSettings
+import Color
 import Vector2 exposing (Vector2)
 
 
@@ -91,29 +93,11 @@ toBounds (Player player) =
 -- VIEW
 
 
-render : Player -> Canvas.Shape
+render : Player -> Canvas.Renderable
 render (Player player) =
-    Canvas.rect
-        ( Vector2.getX player.position, Vector2.getY player.position )
-        width
-        height
-
-
-render_ : Player -> Canvas.Shape
-render_ (Player player) =
-    Canvas.path (Vector2.toTuple player.position)
-        [ player.position
-            |> Vector2.add (Vector2.create { x = width, y = -height })
-            |> Vector2.toTuple
-            |> Canvas.lineTo
-        , player.position
-            |> Vector2.add (Vector2.create { x = -width, y = -height })
-            |> Vector2.toTuple
-            |> Canvas.lineTo
+    Canvas.shapes [ CanvasSettings.fill Color.darkBlue ]
+        [ Canvas.rect
+            ( Vector2.getX player.position, Vector2.getY player.position )
+            width
+            height
         ]
-
-
-drawOffset : ( Float, Float ) -> Float -> Float -> ( Float, Float )
-drawOffset position_ width_ height_ =
-    position_
-        |> Tuple.mapBoth (\x -> x - (width_ / 2)) (\y -> y - (height_ / 2))
