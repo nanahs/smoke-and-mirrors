@@ -7,6 +7,7 @@ import Bullet exposing (Bullet)
 import Canvas
 import Canvas.Settings as CanvasSettings
 import Canvas.Settings.Advanced as CanvasSettings
+import Clone exposing (Clone)
 import Color
 import Enemy exposing (Enemy)
 import Html exposing (..)
@@ -15,7 +16,6 @@ import Html.Events as Events
 import Input exposing (Input)
 import Mirror exposing (Mirror)
 import Player exposing (Player)
-import Queue exposing (Queue)
 import Vector2 exposing (Vector2)
 
 
@@ -28,9 +28,9 @@ type alias Internals =
     , inputs : Set Input
     , bullets : List Bullet
     , shootTimer : Float
-    , clone : Queue (List (Set Input))
     , mirrors : List Mirror
     , enemies : List Enemy
+    , clone : Maybe Clone
     }
 
 
@@ -41,7 +41,7 @@ init =
         , inputs = Set.empty
         , bullets = []
         , shootTimer = 0
-        , clone = Queue.empty
+        , clone = Nothing
         , mirrors = [ Mirror.init ( 50, 50 ) ]
         , enemies =
             [ Enemy.init ( 25, 350 )
@@ -123,10 +123,10 @@ update msg (Model model) =
                     , mirrors = newMirrors
                     , clone =
                         if addClone then
-                            Queue.fromListFIFO [ List.repeat 25 Set.empty ]
+                            Just (Clone.init (Vector2.toTuple (Player.position model.player)))
 
                         else
-                            model.clone
+                            Maybe.map (Clone.update deltaTime_ model.inputs) model.clone
                     , enemies = filterEnemies model.bullets model.enemies
                 }
             , Cmd.none
@@ -198,6 +198,12 @@ view (Model model) =
                     [ CanvasSettings.applyMatrix { m11 = 1, m12 = 0, m21 = 0, m22 = -1, dx = 0, dy = 400 } ]
                 ]
                 [ Player.render model.player
+                , case model.clone of
+                    Just clone ->
+                        Clone.render clone
+
+                    Nothing ->
+                        Canvas.text [] ( 0, 0 ) ""
                 , Canvas.group [] (List.map Bullet.render model.bullets)
                 , Canvas.group [] (List.map Mirror.render model.mirrors)
                 , Canvas.group [] (List.map Enemy.render model.enemies)
