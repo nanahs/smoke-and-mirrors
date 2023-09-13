@@ -2,9 +2,11 @@ module Clone exposing (Clone, init, render, toBounds, update)
 
 import AssocSet as Set exposing (Set)
 import BoundingBox exposing (BoundingBox)
+import Bullet exposing (Bullet)
 import Canvas
 import Canvas.Settings as CanvasSettings
 import Color
+import Constants
 import Input exposing (Input)
 import Queue exposing (Queue)
 import Vector2 exposing (Vector2)
@@ -41,6 +43,7 @@ type alias Internals =
     { position : Vector2
     , velocity : Vector2
     , inputs : Queue (Set Input)
+    , shootTimer : Float
     }
 
 
@@ -50,15 +53,19 @@ init position_ =
         { position = Vector2.create { x = Tuple.first position_, y = Tuple.second position_ }
         , velocity = Vector2.zero
         , inputs = Queue.fromListFIFO (List.repeat 30 Set.empty)
+        , shootTimer = 0
         }
 
 
-update : Float -> Set Input -> Clone -> Clone
+update : Float -> Set Input -> Clone -> ( Clone, Maybe Bullet )
 update delta newInputs (Clone clone) =
     let
-        maybevelocity =
+        maybeInput =
             clone.inputs
                 |> Queue.head
+
+        maybevelocity =
+            maybeInput
                 |> Maybe.map Input.applyInputs
 
         scaledVelocity =
@@ -71,15 +78,38 @@ update delta newInputs (Clone clone) =
 
         newPos =
             Vector2.add clone.position scaledVelocity
+
+        triedToShoot =
+            maybeInput
+                |> Maybe.map (Set.member Input.Shoot)
+                |> Maybe.withDefault False
+
+        didShoot =
+            triedToShoot && canShoot clone
     in
-    Clone
+    ( Clone
         { clone
             | position = newPos
             , inputs =
                 clone.inputs
                     |> Queue.dequeue
                     |> Queue.enqueue newInputs
+            , shootTimer =
+                if not (canShoot clone) then
+                    clone.shootTimer - delta
+
+                else if didShoot then
+                    Constants.shootDelay
+
+                else
+                    clone.shootTimer
         }
+    , if didShoot then
+        Just (Bullet.init clone.position)
+
+      else
+        Nothing
+    )
 
 
 toBounds : Clone -> BoundingBox
@@ -93,6 +123,11 @@ toBounds (Clone clone) =
     , minY = y
     , maxY = y + height
     }
+
+
+canShoot : Internals -> Bool
+canShoot model =
+    model.shootTimer <= 0
 
 
 

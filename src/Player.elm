@@ -71,6 +71,9 @@ update delta inputs (Player player) =
         newPos =
             Vector2.add player.position scaledVelocity
                 |> Vector2.bounds bounds
+
+        didShoot =
+            Set.member Input.Shoot inputs && canShoot player
     in
     ( Player
         { player
@@ -79,13 +82,13 @@ update delta inputs (Player player) =
                 if not (canShoot player) then
                     player.shootTimer - delta
 
-                else if Set.member Input.Shoot inputs && canShoot player then
-                    shootDelay
+                else if didShoot then
+                    Constants.shootDelay
 
                 else
                     player.shootTimer
         }
-    , if Set.member Input.Shoot inputs && canShoot player then
+    , if didShoot then
         Just (Bullet.init player.position)
 
       else
@@ -109,11 +112,6 @@ toBounds (Player player) =
 bounds : { minX : Float, maxX : Float, minY : Float, maxY : Float }
 bounds =
     Constants.gameBounds width
-
-
-shootDelay : Float
-shootDelay =
-    0.1
 
 
 canShoot : Internals -> Bool

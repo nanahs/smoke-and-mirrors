@@ -73,16 +73,27 @@ update msg (Model model) =
                 addClone =
                     List.length model.mirrors - List.length newMirrors > 0
 
-                ( newPlayer, maybeBullet ) =
+                ( newPlayer, maybePlayerBullet ) =
                     Player.update deltaTime_ model.inputs model.player
+
+                ( maybeNewClone, maybeCloneBullet ) =
+                    case Maybe.map (Clone.update deltaTime_ model.inputs) model.clone of
+                        Just ( clone, maybeCloneBullet_ ) ->
+                            ( Just clone, maybeCloneBullet_ )
+
+                        Nothing ->
+                            ( Nothing, Nothing )
+
+                newBullets : List Bullet
+                newBullets =
+                    List.filterMap identity [ maybePlayerBullet, maybeCloneBullet ]
             in
             ( Model
                 { model
                     | player = newPlayer
                     , bullets =
-                        maybeBullet
-                            |> Maybe.map (\bullet -> bullet :: model.bullets)
-                            |> Maybe.withDefault model.bullets
+                        [ newBullets, model.bullets ]
+                            |> List.concat
                             |> List.map (Bullet.updatePosition deltaTime_)
                     , mirrors = newMirrors
                     , clone =
@@ -90,7 +101,7 @@ update msg (Model model) =
                             Just (Clone.init (Vector2.toTuple (Player.position model.player)))
 
                         else
-                            Maybe.map (Clone.update deltaTime_ model.inputs) model.clone
+                            maybeNewClone
                     , enemies = filterEnemies model.bullets model.enemies
                 }
             , Cmd.none
