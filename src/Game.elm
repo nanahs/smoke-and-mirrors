@@ -41,16 +41,12 @@ init =
         { player = Player.init ( Constants.gameWidth / 2, Constants.gameHeight / 10 )
         , inputs = Set.empty
         , bullets = []
-        , mirrors =
-            [ Mirror.init ( 50, 50 )
-            , Mirror.init ( 100, 100 )
-            , Mirror.init ( 150, 100 )
-            , Mirror.init ( 200, 100 )
-            ]
+        , mirrors = []
         , enemies =
             [ Enemy.init ( 25, 350 )
             , Enemy.init ( 75, 375 )
             , Enemy.init ( 125, 325 )
+            , Enemy.init ( 225, 325 )
             , Enemy.init ( 300, 350 )
             ]
         , clones = []
@@ -104,6 +100,12 @@ update msg (Model model) =
 
                 newEnemies =
                     filterEnemies model.bullets model.enemies
+
+                newScore =
+                    model.score + List.length model.enemies - List.length newEnemies
+
+                addMirror =
+                    modBy 5 newScore == 0
             in
             ( Model
                 { model
@@ -113,7 +115,12 @@ update msg (Model model) =
                             |> List.concat
                             |> List.map (Bullet.update deltaTime_)
                             |> List.filterMap identity
-                    , mirrors = newMirrors
+                    , mirrors =
+                        if newScore /= model.score && addMirror then
+                            Mirror.init ( 10, 50 ) :: newMirrors
+
+                        else
+                            newMirrors
                     , clones =
                         if addClone && List.length model.clones < Constants.maxClones then
                             Clone.init (Vector2.toTuple (Player.position model.player)) (numClones + 1) :: newClones
@@ -121,8 +128,7 @@ update msg (Model model) =
                         else
                             newClones
                     , enemies = newEnemies
-                    , score =
-                        model.score + List.length model.enemies - List.length newEnemies
+                    , score = newScore
                 }
             , Cmd.none
             )
