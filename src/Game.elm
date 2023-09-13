@@ -40,7 +40,12 @@ init =
         { player = Player.init ( Constants.gameWidth / 2, Constants.gameHeight / 10 )
         , inputs = Set.empty
         , bullets = []
-        , mirrors = [ Mirror.init ( 50, 50 ), Mirror.init ( 100, 100 ) ]
+        , mirrors =
+            [ Mirror.init ( 50, 50 )
+            , Mirror.init ( 100, 100 )
+            , Mirror.init ( 150, 100 )
+            , Mirror.init ( 200, 100 )
+            ]
         , enemies =
             [ Enemy.init ( 25, 350 )
             , Enemy.init ( 75, 375 )

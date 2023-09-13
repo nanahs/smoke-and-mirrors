@@ -78,6 +78,7 @@ update delta newInputs (Clone clone) =
 
         newPos =
             Vector2.add clone.position scaledVelocity
+                |> Vector2.bounds bounds
 
         triedToShoot =
             maybeInput
@@ -123,6 +124,11 @@ toBounds (Clone clone) =
     , minY = y
     , maxY = y + height
     }
+
+
+bounds : { minX : Float, maxX : Float, minY : Float, maxY : Float }
+bounds =
+    Constants.gameBounds width
 
 
 canShoot : Internals -> Bool
