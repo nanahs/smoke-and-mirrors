@@ -1,7 +1,8 @@
-module Bullet exposing (Bullet, init, render, toBounds, updatePosition, velocity)
+module Bullet exposing (Bullet, init, render, toBounds, update, velocity)
 
 import BoundingBox exposing (BoundingBox)
 import Canvas
+import Constants
 import Vector2 exposing (Vector2)
 
 
@@ -51,8 +52,8 @@ velocity (Bullet bullet) =
     bullet.velocity
 
 
-updatePosition : Float -> Bullet -> Bullet
-updatePosition delta (Bullet bullet) =
+update : Float -> Bullet -> Maybe Bullet
+update delta (Bullet bullet) =
     let
         scaledVelocity =
             Vector2.scale (delta * speed) bullet.velocity
@@ -60,9 +61,11 @@ updatePosition delta (Bullet bullet) =
         newPos =
             Vector2.add bullet.position scaledVelocity
     in
-    -- if y value > canvas then dont return a bullet
-    -- OPTIMIZE BY POOLING THE BULLETS
-    Bullet { bullet | position = newPos }
+    if Vector2.getY newPos > Constants.gameHeight then
+        Nothing
+
+    else
+        Just (Bullet { bullet | position = newPos })
 
 
 toBounds : Bullet -> BoundingBox

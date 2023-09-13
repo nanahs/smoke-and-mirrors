@@ -106,7 +106,8 @@ update msg (Model model) =
                     , bullets =
                         [ newBullets, model.bullets ]
                             |> List.concat
-                            |> List.map (Bullet.updatePosition deltaTime_)
+                            |> List.map (Bullet.update deltaTime_)
+                            |> List.filterMap identity
                     , mirrors = newMirrors
                     , clones =
                         if addClone && List.length model.clones < Constants.maxClones then
