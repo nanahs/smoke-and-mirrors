@@ -47,12 +47,12 @@ type alias Internals =
     }
 
 
-init : ( Float, Float ) -> Clone
-init position_ =
+init : ( Float, Float ) -> Int -> Clone
+init position_ cloneNumber =
     Clone
         { position = Vector2.create { x = Tuple.first position_, y = Tuple.second position_ }
         , velocity = Vector2.zero
-        , inputs = Queue.fromListFIFO (List.repeat 30 Set.empty)
+        , inputs = Queue.fromListFIFO (List.repeat (30 * cloneNumber) Set.empty)
         , shootTimer = 0
         }
 

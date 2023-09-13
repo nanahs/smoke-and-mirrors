@@ -30,7 +30,7 @@ type alias Internals =
     , bullets : List Bullet
     , mirrors : List Mirror
     , enemies : List Enemy
-    , clone : Maybe Clone
+    , clones : List Clone
     }
 
 
@@ -40,14 +40,14 @@ init =
         { player = Player.init ( Constants.gameWidth / 2, Constants.gameHeight / 10 )
         , inputs = Set.empty
         , bullets = []
-        , clone = Nothing
-        , mirrors = [ Mirror.init ( 50, 50 ) ]
+        , mirrors = [ Mirror.init ( 50, 50 ), Mirror.init ( 100, 100 ) ]
         , enemies =
             [ Enemy.init ( 25, 350 )
             , Enemy.init ( 75, 375 )
             , Enemy.init ( 125, 325 )
             , Enemy.init ( 300, 350 )
             ]
+        , clones = []
         }
     , Cmd.none
     )
@@ -76,17 +76,24 @@ update msg (Model model) =
                 ( newPlayer, maybePlayerBullet ) =
                     Player.update deltaTime_ model.inputs model.player
 
-                ( maybeNewClone, maybeCloneBullet ) =
-                    case Maybe.map (Clone.update deltaTime_ model.inputs) model.clone of
-                        Just ( clone, maybeCloneBullet_ ) ->
-                            ( Just clone, maybeCloneBullet_ )
-
-                        Nothing ->
-                            ( Nothing, Nothing )
+                ( newClones, maybeCloneBullets ) =
+                    model.clones
+                        |> List.map (Clone.update deltaTime_ model.inputs)
+                        |> List.foldl
+                            (\( clone, bullet ) ( clones, bullets ) ->
+                                ( clone :: clones
+                                , bullet :: bullets
+                                )
+                            )
+                            ( [], [] )
 
                 newBullets : List Bullet
                 newBullets =
-                    List.filterMap identity [ maybePlayerBullet, maybeCloneBullet ]
+                    List.filterMap identity (maybePlayerBullet :: maybeCloneBullets)
+
+                numClones : Int
+                numClones =
+                    List.length model.clones
             in
             ( Model
                 { model
@@ -96,12 +103,12 @@ update msg (Model model) =
                             |> List.concat
                             |> List.map (Bullet.updatePosition deltaTime_)
                     , mirrors = newMirrors
-                    , clone =
-                        if addClone then
-                            Just (Clone.init (Vector2.toTuple (Player.position model.player)))
+                    , clones =
+                        if addClone && List.length model.clones < Constants.maxClones then
+                            Clone.init (Vector2.toTuple (Player.position model.player)) (numClones + 1) :: newClones
 
                         else
-                            maybeNewClone
+                            newClones
                     , enemies = filterEnemies model.bullets model.enemies
                 }
             , Cmd.none
@@ -153,12 +160,7 @@ view (Model model) =
                     [ CanvasSettings.applyMatrix { m11 = 1, m12 = 0, m21 = 0, m22 = -1, dx = 0, dy = 400 } ]
                 ]
                 [ Player.render model.player
-                , case model.clone of
-                    Just clone ->
-                        Clone.render clone
-
-                    Nothing ->
-                        Canvas.text [] ( 0, 0 ) ""
+                , Canvas.group [] (List.map Clone.render model.clones)
                 , Canvas.group [] (List.map Bullet.render model.bullets)
                 , Canvas.group [] (List.map Mirror.render model.mirrors)
                 , Canvas.group [] (List.map Enemy.render model.enemies)

@@ -1,4 +1,4 @@
-module Constants exposing (gameBounds, gameHeight, gameTransform, gameWidth, shootDelay)
+module Constants exposing (gameBounds, gameHeight, gameTransform, gameWidth, maxClones, shootDelay)
 
 import Canvas.Settings as CanvasSettings
 import Canvas.Settings.Advanced as CanvasSettings
@@ -31,3 +31,8 @@ gameBounds width =
 shootDelay : Float
 shootDelay =
     0.1
+
+
+maxClones : Int
+maxClones =
+    3
