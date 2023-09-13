@@ -31,6 +31,7 @@ type alias Internals =
     , mirrors : List Mirror
     , enemies : List Enemy
     , clones : List Clone
+    , score : Int
     }
 
 
@@ -53,6 +54,7 @@ init =
             , Enemy.init ( 300, 350 )
             ]
         , clones = []
+        , score = 0
         }
     , Cmd.none
     )
@@ -99,6 +101,9 @@ update msg (Model model) =
                 numClones : Int
                 numClones =
                     List.length model.clones
+
+                newEnemies =
+                    filterEnemies model.bullets model.enemies
             in
             ( Model
                 { model
@@ -115,7 +120,9 @@ update msg (Model model) =
 
                         else
                             newClones
-                    , enemies = filterEnemies model.bullets model.enemies
+                    , enemies = newEnemies
+                    , score =
+                        model.score + List.length model.enemies - List.length newEnemies
                 }
             , Cmd.none
             )
@@ -157,7 +164,8 @@ filterMirrors player mirrors =
 view : Model -> Html Msg
 view (Model model) =
     div [ class "flex flex-col items-center" ]
-        [ Canvas.toHtml
+        [ div [] [ text (String.fromInt model.score) ]
+        , Canvas.toHtml
             ( floor Constants.gameHeight, floor Constants.gameWidth )
             [ class "border-2 border-gray-500" ]
             [ clear
