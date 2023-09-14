@@ -1,5 +1,6 @@
-module Smoke exposing (Smoke, generate, generator, init, render)
+module Smoke exposing (Smoke, generate, generator, init, render, toBounds)
 
+import BoundingBox exposing (BoundingBox)
 import Canvas
 import Canvas.Settings as CanvasSettings
 import Color
@@ -32,6 +33,19 @@ render (Smoke smoke) =
             smoke.width
             smoke.height
         ]
+
+
+toBounds : Smoke -> BoundingBox
+toBounds (Smoke smoke) =
+    let
+        ( x, y ) =
+            Vector2.toTuple smoke.position
+    in
+    { minX = x
+    , maxX = x + smoke.width
+    , minY = y
+    , maxY = y + smoke.height
+    }
 
 
 

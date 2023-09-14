@@ -107,6 +107,9 @@ update msg (Model model) =
                 newEnemies =
                     filterEnemies model.bullets model.enemies
 
+                newSmoke =
+                    filterSmoke model.bullets model.smokes
+
                 newScore =
                     model.score + List.length model.enemies - List.length newEnemies
 
@@ -135,6 +138,7 @@ update msg (Model model) =
                             newClones
                     , enemies = newEnemies
                     , score = newScore
+                    , smokes = newSmoke
                 }
             , Cmd.none
             )
@@ -172,6 +176,20 @@ filterEnemies bullets enemies =
 filterMirrors : Player -> List Mirror -> List Mirror
 filterMirrors player mirrors =
     List.filter (not << BoundingBox.overlaps (Player.toBounds player) << Mirror.toBounds) mirrors
+
+
+filterSmoke : List Bullet -> List Smoke -> List Smoke
+filterSmoke bullets smokes =
+    smokes
+        |> List.filter
+            (\smoke ->
+                not <|
+                    List.any
+                        (\bullet ->
+                            BoundingBox.overlaps (Smoke.toBounds smoke) (Bullet.toBounds bullet)
+                        )
+                        bullets
+            )
 
 
 
