@@ -17,12 +17,12 @@ speed =
 
 height : Float
 height =
-    10
+    5
 
 
 width : Float
 width =
-    5
+    2
 
 
 
