@@ -12,7 +12,7 @@ import Vector2 exposing (Vector2)
 
 speed : Float
 speed =
-    500
+    400
 
 
 height : Float

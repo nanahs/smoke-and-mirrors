@@ -17,6 +17,7 @@ import Html.Events as Events
 import Input exposing (Input)
 import Mirror exposing (Mirror)
 import Player exposing (Player)
+import Random
 import Smoke exposing (Smoke)
 import Vector2
 
@@ -44,18 +45,19 @@ init =
         , inputs = Set.empty
         , bullets = []
         , mirrors = [ Mirror.init ( 0, 0 ), Mirror.init ( 100, 0 ), Mirror.init ( 200, 0 ) ]
-        , enemies =
-            [ Enemy.init ( 25, 350 )
-            , Enemy.init ( 75, 375 )
-            , Enemy.init ( 125, 325 )
-            , Enemy.init ( 225, 325 )
-            , Enemy.init ( 300, 350 )
-            ]
+        , enemies = []
+
+        -- [ Enemy.init ( 25, 350 )
+        -- , Enemy.init ( 75, 375 )
+        -- , Enemy.init ( 125, 325 )
+        -- , Enemy.init ( 225, 325 )
+        -- , Enemy.init ( 300, 350 )
+        -- ]
         , clones = []
         , score = 0
-        , smokes = []
+        , smokes = Smoke.generate
         }
-    , Cmd.none
+    , Random.generate GotSmoke Smoke.generator
     )
 
 
@@ -63,6 +65,7 @@ type Msg
     = Frame Float
     | InputDown Input
     | InputUp Input
+    | GotSmoke (List Smoke)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -146,6 +149,11 @@ update msg (Model model) =
             , Cmd.none
             )
 
+        GotSmoke smokes ->
+            ( Model { model | smokes = smokes }
+            , Cmd.none
+            )
+
 
 filterEnemies : List Bullet -> List Enemy -> List Enemy
 filterEnemies bullets enemies =
@@ -187,6 +195,7 @@ view (Model model) =
                 , Canvas.group [] (List.map Bullet.render model.bullets)
                 , Canvas.group [] (List.map Mirror.render model.mirrors)
                 , Canvas.group [] (List.map Enemy.render model.enemies)
+                , Canvas.group [] (List.map Smoke.render model.smokes)
                 ]
             ]
         , viewInputs model.inputs

@@ -52,7 +52,7 @@ init position_ cloneNumber =
     Clone
         { position = Vector2.create { x = Tuple.first position_, y = Tuple.second position_ }
         , velocity = Vector2.zero
-        , inputs = Queue.fromListFIFO (List.repeat (30 * cloneNumber) Set.empty)
+        , inputs = Queue.fromListFIFO (List.repeat (20 * cloneNumber) Set.empty)
         , shootTimer = 0
         }
 
