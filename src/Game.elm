@@ -44,18 +44,11 @@ init =
         { player = Player.init ( Constants.gameWidth / 2, Constants.gameHeight / 10 )
         , inputs = Set.empty
         , bullets = []
-        , mirrors = [ Mirror.init ( 0, 0 ), Mirror.init ( 100, 0 ), Mirror.init ( 200, 0 ) ]
-        , enemies = []
-
-        -- [ Enemy.init ( 25, 350 )
-        -- , Enemy.init ( 75, 375 )
-        -- , Enemy.init ( 125, 325 )
-        -- , Enemy.init ( 225, 325 )
-        -- , Enemy.init ( 300, 350 )
-        -- ]
+        , mirrors = []
+        , enemies = Enemy.group
         , clones = []
         , score = 0
-        , smokes = Smoke.generate
+        , smokes = []
         }
     , Random.generate GotSmoke Smoke.generator
     )
