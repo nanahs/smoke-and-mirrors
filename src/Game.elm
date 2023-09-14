@@ -17,6 +17,7 @@ import Html.Events as Events
 import Input exposing (Input)
 import Mirror exposing (Mirror)
 import Player exposing (Player)
+import Smoke exposing (Smoke)
 import Vector2
 
 
@@ -32,6 +33,7 @@ type alias Internals =
     , enemies : List Enemy
     , clones : List Clone
     , score : Int
+    , smokes : List Smoke
     }
 
 
@@ -41,7 +43,7 @@ init =
         { player = Player.init ( Constants.gameWidth / 2, Constants.gameHeight / 10 )
         , inputs = Set.empty
         , bullets = []
-        , mirrors = []
+        , mirrors = [ Mirror.init ( 0, 0 ), Mirror.init ( 100, 0 ), Mirror.init ( 200, 0 ) ]
         , enemies =
             [ Enemy.init ( 25, 350 )
             , Enemy.init ( 75, 375 )
@@ -51,6 +53,7 @@ init =
             ]
         , clones = []
         , score = 0
+        , smokes = []
         }
     , Cmd.none
     )

@@ -64,12 +64,10 @@ update delta inputs (Player player) =
     let
         velocity =
             Input.applyInputs inputs
-
-        scaledVelocity =
-            Vector2.scale (delta * speed) velocity
+                |> Vector2.scale (delta * speed)
 
         newPos =
-            Vector2.add player.position scaledVelocity
+            Vector2.add player.position velocity
                 |> Vector2.bounds bounds
 
         didShoot =
