@@ -275,6 +275,14 @@ view (Model model) =
                 ]
             ]
         , div [ class "flex" ] [ text <| "Score: " ++ String.fromInt (model.score * 10) ]
+        , div [ class "flex" ]
+            [ text <|
+                String.concat
+                    [ "Mirrors: "
+                    , String.fromInt (List.length model.clones)
+                    , "/3"
+                    ]
+            ]
         , div [] [ text "WASD or Arrow Keys to Move, Space Bar to Shoot" ]
         ]
 
