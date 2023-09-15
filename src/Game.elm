@@ -19,6 +19,7 @@ import Html.Events as Events
 import Input exposing (Input)
 import Mirror exposing (Mirror)
 import Player exposing (Player)
+import Random
 import Smoke exposing (Smoke)
 import Vector2
 
@@ -53,8 +54,7 @@ init =
         , smokes = []
         , bulletSpawnId = 0
         }
-      -- , Random.generate GotSmoke Smoke.generator
-    , Cmd.none
+    , Random.generate GotSmoke Smoke.generator
     )
 
 
