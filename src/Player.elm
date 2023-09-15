@@ -2,11 +2,11 @@ module Player exposing (Player, height, init, position, render, toBounds, update
 
 import AssocSet as Set exposing (Set)
 import BoundingBox exposing (BoundingBox)
-import Bullet exposing (Bullet)
 import Canvas
 import Canvas.Settings as CanvasSettings
 import Color
 import Constants
+import Game.Action as Action exposing (Action)
 import Input exposing (Input)
 import Vector2 exposing (Vector2)
 
@@ -59,7 +59,7 @@ position (Player player) =
     player.position
 
 
-update : Float -> Set Input -> Player -> ( Player, Maybe Bullet )
+update : Float -> Set Input -> Player -> ( Player, Action )
 update delta inputs (Player player) =
     let
         velocity =
@@ -87,10 +87,10 @@ update delta inputs (Player player) =
                     player.shootTimer
         }
     , if didShoot then
-        Just (Bullet.init player.position)
+        Action.SpawnBullet player.position
 
       else
-        Nothing
+        Action.NoOp
     )
 
 

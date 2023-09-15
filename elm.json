@@ -14,13 +14,13 @@
             "elm/random": "1.0.0",
             "erlandsona/assoc-set": "1.1.2",
             "joakin/elm-canvas": "5.0.0",
-            "kudzu-forest/elm-constant-time-queue": "1.2.2"
+            "kudzu-forest/elm-constant-time-queue": "1.2.2",
+            "pzp1997/assoc-list": "1.0.0"
         },
         "indirect": {
             "elm/time": "1.0.0",
             "elm/url": "1.0.0",
-            "elm/virtual-dom": "1.0.3",
-            "pzp1997/assoc-list": "1.0.0"
+            "elm/virtual-dom": "1.0.3"
         }
     },
     "test-dependencies": {

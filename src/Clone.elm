@@ -2,11 +2,11 @@ module Clone exposing (Clone, init, render, toBounds, update)
 
 import AssocSet as Set exposing (Set)
 import BoundingBox exposing (BoundingBox)
-import Bullet exposing (Bullet)
 import Canvas
 import Canvas.Settings as CanvasSettings
 import Color
 import Constants
+import Game.Action as Action exposing (Action)
 import Input exposing (Input)
 import Queue exposing (Queue)
 import Vector2 exposing (Vector2)
@@ -57,7 +57,7 @@ init position_ cloneNumber =
         }
 
 
-update : Float -> Set Input -> Clone -> ( Clone, Maybe Bullet )
+update : Float -> Set Input -> Clone -> ( Clone, Action )
 update delta newInputs (Clone clone) =
     let
         maybeInput =
@@ -106,10 +106,10 @@ update delta newInputs (Clone clone) =
                     clone.shootTimer
         }
     , if didShoot then
-        Just (Bullet.init clone.position)
+        Action.SpawnBullet clone.position
 
       else
-        Nothing
+        Action.NoOp
     )
 
 

@@ -1,4 +1,4 @@
-module Bullet exposing (Bullet, init, render, toBounds, update, velocity)
+module Bullet exposing (Bullet, id, init, isInBounds, render, toBounds, update, velocity)
 
 import BoundingBox exposing (BoundingBox)
 import Canvas
@@ -34,17 +34,24 @@ type Bullet
 
 
 type alias Internals =
-    { position : Vector2
+    { id : String
+    , position : Vector2
     , velocity : Vector2
     }
 
 
-init : Vector2 -> Bullet
-init position_ =
+init : String -> Vector2 -> Bullet
+init id_ position_ =
     Bullet
-        { position = position_
+        { id = id_
+        , position = position_
         , velocity = Vector2.create { x = 0, y = 1 }
         }
+
+
+id : Bullet -> String
+id (Bullet bullet) =
+    bullet.id
 
 
 velocity : Bullet -> Vector2
@@ -52,7 +59,7 @@ velocity (Bullet bullet) =
     bullet.velocity
 
 
-update : Float -> Bullet -> Maybe Bullet
+update : Float -> Bullet -> Bullet
 update delta (Bullet bullet) =
     let
         scaledVelocity =
@@ -61,11 +68,12 @@ update delta (Bullet bullet) =
         newPos =
             Vector2.add bullet.position scaledVelocity
     in
-    if Vector2.getY newPos > Constants.gameHeight then
-        Nothing
+    Bullet { bullet | position = newPos }
 
-    else
-        Just (Bullet { bullet | position = newPos })
+
+isInBounds : Bullet -> Bool
+isInBounds (Bullet bullet) =
+    Vector2.getY bullet.position <= Constants.gameHeight
 
 
 toBounds : Bullet -> BoundingBox
