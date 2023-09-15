@@ -91,11 +91,11 @@ update msg (Model model) =
 
                 newBullets =
                     (playerAction :: cloneActions)
-                        |> List.map
-                            (\action ->
+                        |> List.indexedMap
+                            (\index action ->
                                 let
                                     nextId =
-                                        String.fromInt (model.bulletSpawnId + 1)
+                                        String.fromInt (model.bulletSpawnId + 1 + index)
                                 in
                                 case action of
                                     Action.SpawnBullet pos ->
@@ -160,7 +160,7 @@ update msg (Model model) =
                     , enemies = newEnemies
                     , score = newScore
                     , smokes = newSmoke
-                    , bulletSpawnId = model.bulletSpawnId + List.length newBullets
+                    , bulletSpawnId = model.bulletSpawnId + List.length newBullets + 1
                 }
             , if List.length model.enemies == 0 then
                 Random.generate GotSmoke Smoke.generator
@@ -257,8 +257,7 @@ filterSmoke bullets smokes =
 view : Model -> Html Msg
 view (Model model) =
     div [ class "flex flex-col items-center" ]
-        [ div [] [ text (String.fromInt model.score) ]
-        , Canvas.toHtml
+        [ Canvas.toHtml
             ( floor Constants.gameHeight, floor Constants.gameWidth )
             [ class "border-2 border-gray-500" ]
             [ clear
@@ -266,7 +265,8 @@ view (Model model) =
                 [ CanvasSettings.transform
                     [ CanvasSettings.applyMatrix { m11 = 1, m12 = 0, m21 = 0, m22 = -1, dx = 0, dy = 400 } ]
                 ]
-                [ Player.render model.player
+                [ renderBarrier
+                , Player.render model.player
                 , Canvas.group [] (List.map Clone.render model.clones)
                 , Canvas.group [] (List.map Bullet.render (Dict.values model.bullets))
                 , Canvas.group [] (List.map Mirror.render model.mirrors)
@@ -274,26 +274,23 @@ view (Model model) =
                 , Canvas.group [] (List.map Smoke.render model.smokes)
                 ]
             ]
-        , viewInputs model.inputs
+        , div [ class "flex" ] [ text <| "Score: " ++ String.fromInt (model.score * 10) ]
+        , div [] [ text "WASD or Arrow Keys to Move, Space Bar to Shoot" ]
         ]
-
-
-viewInputs : Set Input -> Html msg
-viewInputs inputs =
-    inputs
-        |> Set.toList
-        |> List.map viewInput
-        |> div []
-
-
-viewInput : Input -> Html msg
-viewInput input =
-    div [] [ text (Input.toString input) ]
 
 
 clear : Canvas.Renderable
 clear =
-    Canvas.shapes [ CanvasSettings.fill Color.white ] [ Canvas.rect ( 0, 0 ) Constants.gameWidth Constants.gameHeight ]
+    Canvas.shapes [ CanvasSettings.fill Color.white ]
+        [ Canvas.rect ( 0, 0 ) Constants.gameWidth Constants.gameHeight
+        ]
+
+
+renderBarrier : Canvas.Renderable
+renderBarrier =
+    Canvas.shapes [ CanvasSettings.stroke Color.black ]
+        [ Canvas.path ( 0, Constants.gameHeight / 4 + 15 ) [ Canvas.lineTo ( Constants.gameWidth, Constants.gameHeight / 4 + 15 ) ]
+        ]
 
 
 

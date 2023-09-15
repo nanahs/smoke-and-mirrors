@@ -3,6 +3,7 @@ module Mirror exposing (Mirror, init, render, toBounds)
 import BoundingBox exposing (BoundingBox)
 import Canvas
 import Canvas.Settings as CanvasSettings
+import Canvas.Settings.Advanced as CanvasSettings
 import Color
 import Vector2 exposing (Vector2)
 
@@ -46,9 +47,17 @@ toBounds (Mirror mirror) =
 
 render : Mirror -> Canvas.Renderable
 render (Mirror mirror) =
-    Canvas.shapes [ CanvasSettings.fill Color.gray ]
-        [ Canvas.rect
-            ( Vector2.getX mirror.position, Vector2.getY mirror.position )
-            width
-            height
+    Canvas.group []
+        [ Canvas.shapes [ CanvasSettings.fill Color.gray ]
+            [ Canvas.rect
+                ( Vector2.getX mirror.position, Vector2.getY mirror.position )
+                width
+                height
+            ]
+        , Canvas.text
+            [ CanvasSettings.transform
+                [ CanvasSettings.applyMatrix { m11 = 1, m12 = 0, m21 = 0, m22 = -1, dx = 0, dy = 120 } ]
+            ]
+            (Vector2.toTuple mirror.position)
+            "Mirror"
         ]
