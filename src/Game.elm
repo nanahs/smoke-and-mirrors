@@ -18,6 +18,7 @@ import Html.Attributes exposing (..)
 import Html.Events as Events
 import Input exposing (Input)
 import Mirror exposing (Mirror)
+import Platform.Cmd as Cmd
 import Player exposing (Player)
 import Random
 import Smoke exposing (Smoke)
@@ -161,7 +162,11 @@ update msg (Model model) =
                     , smokes = newSmoke
                     , bulletSpawnId = model.bulletSpawnId + List.length newBullets
                 }
-            , Cmd.none
+            , if List.length model.enemies == 0 then
+                Random.generate GotSmoke Smoke.generator
+
+              else
+                Cmd.none
             )
 
         InputDown input ->
@@ -175,7 +180,11 @@ update msg (Model model) =
             )
 
         GotSmoke smokes ->
-            ( Model { model | smokes = smokes }
+            ( Model
+                { model
+                    | smokes = smokes
+                    , enemies = Enemy.group
+                }
             , Cmd.none
             )
 
