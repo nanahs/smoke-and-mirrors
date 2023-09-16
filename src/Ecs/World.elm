@@ -38,26 +38,27 @@ update : Float -> Set Input -> World -> World
 update delatTime inputs world =
     { world
         | entities =
-            let
-                updatedEntities =
-                    world.entities
-                        |> Dict.filter (\_ entity -> Dict.member Component.velKey entity.components)
-                        |> Dict.map (\_ entity -> System.playerVelocity delatTime inputs entity)
-                        |> Dict.foldl
-                            (\key entity worldEntities ->
-                                Dict.update key (\_ -> Just entity) worldEntities
-                            )
-                            world.entities
-            in
-            -- TODO SHANAN - I think these needs to apply a system to all entities before moving on to the next sytsem
-            Dict.map
-                (\_ entity ->
-                    entity
-                        |> System.playerVelocity delatTime inputs
-                        |> System.transform
-                )
-                world.entities
+            -- It is important to apply a whole system one at a time
+            world.entities
+                |> applySystem [ Component.velKey ] (System.playerVelocity delatTime inputs)
+                |> applySystem [ Component.transformKey, Component.velKey ] System.transform
     }
+
+
+applySystem : List Component.Key -> (Entity -> Entity) -> Dict Int Entity -> Dict Int Entity
+applySystem keysRequired system entities =
+    entities
+        |> Dict.foldl
+            (\key entity worldEntities ->
+                if List.all (\componentKey -> Dict.member componentKey entity.components) keysRequired then
+                    Dict.update key
+                        (\_ -> Just (system entity))
+                        worldEntities
+
+                else
+                    worldEntities
+            )
+            entities
 
 
 render : World -> Canvas.Renderable
