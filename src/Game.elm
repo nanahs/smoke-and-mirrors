@@ -7,6 +7,7 @@ import Canvas.Settings as CanvasSettings
 import Canvas.Settings.Advanced as CanvasSettings
 import Color
 import Constants
+import Dimensions exposing (Dimensions)
 import Ecs.Component as Component
 import Ecs.Entity as Entity
 import Ecs.World as World exposing (World)
@@ -15,8 +16,7 @@ import Html.Attributes exposing (..)
 import Html.Events as Events
 import Input exposing (Input)
 import Platform.Cmd as Cmd
-import Transform exposing (Transform)
-import Vector2
+import Vector2 exposing (Vector2)
 
 
 type Model
@@ -37,10 +37,13 @@ init =
                 |> World.getNextEntityId
 
         player =
-            Entity.create nextEntityId
-                |> Entity.add (Component.Transform (Transform.init 15 15 Vector2.zero))
-                |> Entity.add (Component.Velocity 10 Vector2.zero)
+            Entity.create nextEntityId "Player"
+                |> Entity.add (Component.Position Vector2.zero)
+                |> Entity.add (Component.Dimensions (Dimensions.init 15 15))
+                |> Entity.add (Component.Velocity 30 Vector2.zero)
                 |> Entity.add (Component.Render renderPlayer)
+                |> Entity.add (Component.Shoot True)
+                |> Entity.add Component.Movement
     in
     ( Model
         { world = World.addEntity player world
@@ -50,10 +53,10 @@ init =
     )
 
 
-renderPlayer : Transform -> Canvas.Renderable
-renderPlayer transform =
+renderPlayer : Vector2 -> Dimensions -> Canvas.Renderable
+renderPlayer position dimensions =
     Canvas.shapes [ CanvasSettings.fill Color.darkBlue ]
-        [ Canvas.rect (Vector2.toTuple (Transform.position transform)) (Transform.width transform) (Transform.height transform)
+        [ Canvas.rect (Vector2.toTuple position) (Dimensions.width dimensions) (Dimensions.height dimensions)
         ]
 
 

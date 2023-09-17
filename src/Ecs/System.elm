@@ -1,32 +1,29 @@
-module Ecs.System exposing (playerVelocity, render, shoot, transform)
+module Ecs.System exposing (Action(..), movement, render, shoot, stepPosition)
 
-import AssocSet exposing (Set)
+import AssocSet as Set exposing (Set)
 import Canvas
+import Canvas.Settings as CanvasSettings
+import Canvas.Settings.Advanced as CanvasSettings
+import Color
 import Dict exposing (Dict)
+import Dimensions exposing (Dimensions)
 import Ecs.Component as Component exposing (Component)
 import Input exposing (Input)
-import Transform
-import Vector2
+import Vector2 exposing (Vector2)
 
 
-playerVelocity :
-    Float
-    -> Set Input
+movement :
+    Set Input
     -> { x | components : Dict Component.Key Component }
     -> { x | components : Dict Component.Key Component }
-playerVelocity deltaTime inputs entity =
-    case Dict.get Component.velKey entity.components of
-        Just (Component.Velocity speed _) ->
-            let
-                newVelocity =
-                    Input.applyInputs inputs
-                        |> Vector2.scale (deltaTime * speed)
-            in
+movement inputs entity =
+    case ( Dict.get Component.velKey entity.components, Dict.get Component.movementKey entity.components ) of
+        ( Just (Component.Velocity speed _), Just Component.Movement ) ->
             { entity
                 | components =
                     Dict.update Component.velKey
                         (\_ ->
-                            Just (Component.Velocity speed newVelocity)
+                            Just (Component.Velocity speed (Input.applyInputs inputs))
                         )
                         entity.components
             }
@@ -35,15 +32,15 @@ playerVelocity deltaTime inputs entity =
             entity
 
 
-transform : { x | components : Dict Component.Key Component } -> { x | components : Dict Component.Key Component }
-transform entity =
-    case ( Dict.get Component.transformKey entity.components, Dict.get Component.velKey entity.components ) of
-        ( Just (Component.Transform transform_), Just (Component.Velocity _ velocity) ) ->
+stepPosition : Float -> { x | components : Dict Component.Key Component } -> { x | components : Dict Component.Key Component }
+stepPosition deltaTime entity =
+    case ( Dict.get Component.positionKey entity.components, Dict.get Component.velKey entity.components ) of
+        ( Just (Component.Position position), Just (Component.Velocity speed velocity_) ) ->
             { entity
                 | components =
-                    Dict.update Component.transformKey
+                    Dict.update Component.positionKey
                         (\_ ->
-                            Just (Component.Transform (Transform.updatePosition (Vector2.add velocity) transform_))
+                            Just (Component.Position (Vector2.add (Vector2.scale (deltaTime * speed) velocity_) position))
                         )
                         entity.components
             }
@@ -54,19 +51,45 @@ transform entity =
 
 render : { x | components : Dict Component.Key Component } -> Canvas.Renderable
 render entity =
-    case ( Dict.get Component.transformKey entity.components, Dict.get Component.renderKey entity.components ) of
-        ( Just (Component.Transform transform_), Just (Component.Render toRender) ) ->
-            toRender transform_
+    case
+        ( Dict.get Component.positionKey entity.components
+        , Dict.get Component.renderKey entity.components
+        , Dict.get Component.dimensionsKey entity.components
+        )
+    of
+        ( Just (Component.Position position), Just (Component.Render toRender), Just (Component.Dimensions dimensions) ) ->
+            toRender position dimensions
 
         _ ->
             Canvas.group [] []
 
 
-shoot : { x | components : Dict Component.Key Component } -> ()
-shoot entity =
-    case ( Dict.get Component.transformKey entity.components, Dict.get Component.renderKey entity.components ) of
-        ( Just (Component.Transform transform_), Just (Component.Shoot tryShoot) ) ->
-            ()
+shoot : Set Input -> { x | components : Dict Component.Key Component } -> Action
+shoot inputs entity =
+    case ( Dict.get Component.positionKey entity.components, Dict.get Component.shootKey entity.components ) of
+        ( Just (Component.Position position), Just (Component.Shoot _) ) ->
+            if Set.member Input.Shoot inputs then
+                [ Component.Position position
+                , Component.Dimensions (Dimensions.init 5 2)
+                , Component.Velocity 50 (Vector2.create { x = 0, y = 1 })
+                , Component.Render renderBullet
+                ]
+                    |> SpawnBullet
+
+            else
+                NoOp
 
         _ ->
-            ()
+            NoOp
+
+
+type Action
+    = SpawnBullet (List Component)
+    | NoOp
+
+
+renderBullet : Vector2 -> Dimensions -> Canvas.Renderable
+renderBullet position dimensions =
+    Canvas.shapes [ CanvasSettings.fill Color.darkBlue ]
+        [ Canvas.rect (Vector2.toTuple position) (Dimensions.width dimensions) (Dimensions.height dimensions)
+        ]

@@ -2,9 +2,9 @@ module Ecs.Entity exposing
     ( Entity
     , add
     , create
+    , createWithComponents
     , getByKey
     , remove
-    , update
     )
 
 import Dict exposing (Dict)
@@ -14,12 +14,27 @@ import Ecs.Component as Component exposing (Component)
 type alias Entity =
     { id : Int
     , components : Dict Component.Key Component
+    , tag : String
     }
 
 
-create : Int -> Entity
-create id =
-    { id = id, components = Dict.empty }
+create : Int -> String -> Entity
+create id tag =
+    { id = id, components = Dict.empty, tag = tag }
+
+
+createWithComponents : Int -> String -> List Component -> Entity
+createWithComponents id tag components =
+    { id = id
+    , components =
+        components
+            |> List.foldl
+                (\component acc ->
+                    Dict.insert (Component.toKey component) component acc
+                )
+                Dict.empty
+    , tag = tag
+    }
 
 
 add : Component -> Entity -> Entity
@@ -30,11 +45,6 @@ add component entity =
 remove : Component -> Entity -> Entity
 remove component entity =
     { entity | components = Dict.remove (Component.toKey component) entity.components }
-
-
-update : (Component -> Component) -> Component -> Component
-update func component =
-    func component
 
 
 getByKey : Component.Key -> Entity -> Maybe Component

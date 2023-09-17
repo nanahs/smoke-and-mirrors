@@ -4,7 +4,7 @@ import AssocSet exposing (Set)
 import Canvas
 import Dict exposing (Dict)
 import Ecs.Component as Component
-import Ecs.Entity exposing (Entity)
+import Ecs.Entity as Entity exposing (Entity)
 import Ecs.System as System
 import Input exposing (Input)
 
@@ -36,12 +36,36 @@ removeEntity entity world =
 
 update : Float -> Set Input -> World -> World
 update delatTime inputs world =
-    { world
+    let
+        newWorld =
+            world.entities
+                |> accrueActions [ Component.shootKey ] (System.shoot inputs)
+                |> List.foldl
+                    (\action worldAcc ->
+                        case action of
+                            System.SpawnBullet components ->
+                                let
+                                    ( nextWorld, nextEntityId ) =
+                                        getNextEntityId worldAcc
+
+                                    entity =
+                                        Entity.createWithComponents nextEntityId "Bullet" components
+                                in
+                                nextWorld
+                                    |> addEntity entity
+
+                            System.NoOp ->
+                                worldAcc
+                    )
+                    world
+    in
+    { newWorld
         | entities =
             -- It is important to apply a whole system one at a time
-            world.entities
-                |> applySystem [ Component.velKey ] (System.playerVelocity delatTime inputs)
-                |> applySystem [ Component.transformKey, Component.velKey ] System.transform
+            newWorld.entities
+                |> applySystem [ Component.velKey ] (System.movement inputs)
+                -- |> applySystem [ Component.velKey ] (System.velocity delatTime)
+                |> applySystem [ Component.positionKey, Component.velKey ] (System.stepPosition delatTime)
     }
 
 
@@ -51,6 +75,10 @@ applySystem keysRequired system entities =
         |> Dict.foldl
             (\key entity worldEntities ->
                 if List.all (\componentKey -> Dict.member componentKey entity.components) keysRequired then
+                    let
+                        _ =
+                            Debug.log "entity tag: " entity.tag
+                    in
                     Dict.update key
                         (\_ -> Just (system entity))
                         worldEntities
@@ -59,6 +87,20 @@ applySystem keysRequired system entities =
                     worldEntities
             )
             entities
+
+
+accrueActions : List Component.Key -> (Entity -> System.Action) -> Dict Int Entity -> List System.Action
+accrueActions keysRequired system entities =
+    entities
+        |> Dict.foldl
+            (\_ entity actions ->
+                if List.all (\componentKey -> Dict.member componentKey entity.components) keysRequired then
+                    system entity :: actions
+
+                else
+                    actions
+            )
+            []
 
 
 render : World -> Canvas.Renderable

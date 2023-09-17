@@ -1,15 +1,27 @@
-module Ecs.Component exposing (Component(..), Key, renderKey, shootKey, toKey, transformKey, velKey)
+module Ecs.Component exposing
+    ( Component(..)
+    , Key
+    , dimensionsKey
+    , movementKey
+    , positionKey
+    , renderKey
+    , shootKey
+    , toKey
+    , velKey
+    )
 
 import Canvas
-import Transform exposing (Transform)
+import Dimensions exposing (Dimensions)
 import Vector2 exposing (Vector2)
 
 
 type Component
-    = Transform Transform
+    = Position Vector2
     | Velocity Float Vector2
-    | Render (Transform -> Canvas.Renderable)
+    | Render (Vector2 -> Dimensions -> Canvas.Renderable)
+    | Movement
     | Shoot Bool
+    | Dimensions Dimensions
 
 
 type alias Key =
@@ -19,7 +31,7 @@ type alias Key =
 toKey : Component -> Key
 toKey component =
     case component of
-        Transform _ ->
+        Position _ ->
             1
 
         Velocity _ _ ->
@@ -31,9 +43,15 @@ toKey component =
         Shoot _ ->
             4
 
+        Movement ->
+            5
 
-transformKey : Int
-transformKey =
+        Dimensions _ ->
+            6
+
+
+positionKey : Int
+positionKey =
     1
 
 
@@ -50,3 +68,13 @@ renderKey =
 shootKey : Int
 shootKey =
     4
+
+
+movementKey : Int
+movementKey =
+    5
+
+
+dimensionsKey : Int
+dimensionsKey =
+    6
