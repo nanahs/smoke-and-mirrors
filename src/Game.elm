@@ -1,6 +1,6 @@
 module Game exposing (Model, Msg, init, subscriptions, update, view)
 
-import AssocSet as Set exposing (Set)
+import AssocSet
 import Browser.Events as Events
 import Canvas
 import Canvas.Settings as CanvasSettings
@@ -9,6 +9,12 @@ import Color
 import Constants
 import Dimensions exposing (Dimensions)
 import Ecs.Component as Component
+import Ecs.Component.Dimensions as Dimensions
+import Ecs.Component.Event as Event
+import Ecs.Component.PlayerInput as PlayerInput
+import Ecs.Component.Position as Position
+import Ecs.Component.Render as Render
+import Ecs.Component.Velocity as Velocity
 import Ecs.Entity as Entity
 import Ecs.World as World exposing (World)
 import Html exposing (..)
@@ -16,6 +22,7 @@ import Html.Attributes exposing (..)
 import Html.Events as Events
 import Input exposing (Input)
 import Platform.Cmd as Cmd
+import Set
 import Vector2 exposing (Vector2)
 
 
@@ -25,29 +32,48 @@ type Model
 
 type alias Internals =
     { world : World
-    , inputs : Set Input
+    , inputs : AssocSet.Set Input
     }
 
 
 init : ( Model, Cmd Msg )
 init =
     let
-        ( world, nextEntityId ) =
-            World.singleton
-                |> World.getNextEntityId
+        ( nextEntityId, w ) =
+            Entity.create World.singleton
 
-        player =
-            Entity.create nextEntityId "Player"
-                |> Entity.add (Component.Position Vector2.zero)
-                |> Entity.add (Component.Dimensions (Dimensions.init 15 15))
-                |> Entity.add (Component.Velocity 30 Vector2.zero)
-                |> Entity.add (Component.Render renderPlayer)
-                |> Entity.add (Component.Shoot True)
-                |> Entity.add Component.Movement
+        ww =
+            World.addEntityWithComponents nextEntityId
+                (AssocSet.fromList
+                    -- TODO SHANAN - think of easier api for these
+                    [ Component.Dimensions (Dimensions.Dimensions (Dimensions.init 15 15))
+                    , Component.Event Event.NoOp
+                    , Component.PlayerInput (PlayerInput.PlayerInput Set.empty)
+                    , Component.Position (Position.Position Vector2.zero)
+                    , Component.Render (Render.Render renderPlayer)
+                    , Component.Velocity (Velocity.Velocity 30 Vector2.zero)
+                    ]
+                )
+                w
+
+        ( neid, www ) =
+            Entity.create ww
+
+        newWorld =
+            World.addEntityWithComponents neid
+                (AssocSet.fromList
+                    [ Component.Dimensions (Dimensions.Dimensions (Dimensions.init 15 15))
+                    , Component.Event Event.NoOp
+                    , Component.Position (Position.Position Vector2.zero)
+                    , Component.Render (Render.Render renderBullet)
+                    , Component.Velocity (Velocity.Velocity 30 Vector2.zero)
+                    ]
+                )
+                www
     in
     ( Model
-        { world = World.addEntity player world
-        , inputs = Set.empty
+        { world = newWorld
+        , inputs = AssocSet.empty
         }
     , Cmd.none
     )
@@ -55,6 +81,13 @@ init =
 
 renderPlayer : Vector2 -> Dimensions -> Canvas.Renderable
 renderPlayer position dimensions =
+    Canvas.shapes [ CanvasSettings.fill Color.darkBlue ]
+        [ Canvas.rect (Vector2.toTuple position) (Dimensions.width dimensions) (Dimensions.height dimensions)
+        ]
+
+
+renderBullet : Vector2 -> Dimensions -> Canvas.Renderable
+renderBullet position dimensions =
     Canvas.shapes [ CanvasSettings.fill Color.darkBlue ]
         [ Canvas.rect (Vector2.toTuple position) (Dimensions.width dimensions) (Dimensions.height dimensions)
         ]
@@ -79,12 +112,12 @@ update msg (Model model) =
             )
 
         InputDown input ->
-            ( Model { model | inputs = Set.insert input model.inputs }
+            ( Model { model | inputs = AssocSet.insert input model.inputs }
             , Cmd.none
             )
 
         InputUp input ->
-            ( Model { model | inputs = Set.remove input model.inputs }
+            ( Model { model | inputs = AssocSet.remove input model.inputs }
             , Cmd.none
             )
 
@@ -105,7 +138,8 @@ view (Model model) =
                     [ CanvasSettings.applyMatrix { m11 = 1, m12 = 0, m21 = 0, m22 = -1, dx = 0, dy = 400 } ]
                 ]
                 [ renderBarrier
-                , World.render model.world
+
+                -- , World.render model.world
                 ]
             ]
         , div [] [ text "WASD or Arrow Keys to Move, Space Bar to Shoot" ]
