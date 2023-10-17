@@ -1,19 +1,21 @@
 module Ecs.System.Render exposing (render)
 
 import Canvas
-import Dict exposing (Dict)
-import Ecs.Component as Component exposing (Component)
+import Ecs.Component exposing (Components)
+import Ecs.Component.Dimensions exposing (Dimensions(..))
+import Ecs.Component.Position exposing (Position(..))
+import Ecs.Component.Render exposing (Render(..))
 
 
-render : { x | components : Dict Component.Key Component } -> Canvas.Renderable
+render : { x | components : Components } -> Canvas.Renderable
 render entity =
     case
-        ( Dict.get Component.positionKey entity.components
-        , Dict.get Component.renderKey entity.components
-        , Dict.get Component.dimensionsKey entity.components
+        ( entity.components.position
+        , entity.components.render
+        , entity.components.dimensions
         )
     of
-        ( Just (Component.Position position), Just (Component.Render toRender), Just (Component.Dimensions dimensions) ) ->
+        ( Just (Position position), Just (Render toRender), Just (Dimensions dimensions) ) ->
             toRender position dimensions
 
         _ ->

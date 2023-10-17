@@ -1,13 +1,14 @@
 module Ecs.System.StepPosition exposing (stepPosition)
 
+import AssocSet as Set exposing (Set)
 import Dict exposing (Dict)
 import Ecs.Component as Component exposing (Component)
 import Vector2
 
 
-stepPosition : Float -> { x | components : Dict Component.Key Component } -> { x | components : Dict Component.Key Component }
+stepPosition : Float -> { x | components : Set Component } -> { x | components : Set Component }
 stepPosition deltaTime entity =
-    case ( Dict.get Component.positionKey entity.components, Dict.get Component.velKey entity.components ) of
+    case ( Set.get Component.Position entity.components, Dict.get Component.velKey entity.components ) of
         ( Just (Component.Position position), Just (Component.Velocity speed velocity_) ) ->
             { entity
                 | components =

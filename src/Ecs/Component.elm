@@ -1,4 +1,4 @@
-module Ecs.Component exposing (Component(..))
+module Ecs.Component exposing (Component(..), Components, empty)
 
 import Ecs.Component.Dimensions exposing (Dimensions)
 import Ecs.Component.Event exposing (Event)
@@ -15,3 +15,22 @@ type Component
     | Position Position
     | Render Render
     | Velocity Velocity
+
+
+type alias Components =
+    { dimensions : Maybe Dimensions
+    , playerInput : Maybe PlayerInput
+    , position : Maybe Position
+    , render : Maybe Render
+    , velocity : Maybe Velocity
+    }
+
+
+empty : Components
+empty =
+    { dimensions = Nothing
+    , playerInput = Nothing
+    , position = Nothing
+    , render = Nothing
+    , velocity = Nothing
+    }

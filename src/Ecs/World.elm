@@ -1,4 +1,12 @@
-module Ecs.World exposing (World, addEntity, addEntityWithComponents, getNextEntityId, removeEntity, singleton, update)
+module Ecs.World exposing
+    ( World
+    , addEntity
+    , addEntityWithComponents
+    , getNextEntityId
+    , removeEntity
+    , singleton
+    , update
+    )
 
 import AssocSet as Set exposing (Set)
 import Dict exposing (Dict)
@@ -75,31 +83,34 @@ update delatTime inputs world =
         | entities =
             -- It is important to apply a whole system one at a time
             newWorld.entities
+                |> applySystem [ Component.velKey ] (System.movement inputs)
 
-        -- |> applySystem [ Component.velKey ] (System.movement inputs)
         -- -- |> applySystem [ Component.velKey ] (System.velocity delatTime)
         -- |> applySystem [ Component.positionKey, Component.velKey ] (System.stepPosition delatTime)
     }
 
 
+applySystem : List Component.Key -> (Entity -> Entity) -> Dict Int Entity -> Dict Int Entity
+applySystem keysRequired system entities =
+    entities
+        |> Dict.foldl
+            (\key entity worldEntities ->
+                if List.all (\componentKey -> Dict.member componentKey entity.components) keysRequired then
+                    let
+                        _ =
+                            Debug.log "entity tag: " entity.tag
+                    in
+                    Dict.update key
+                        (\_ -> Just (system entity))
+                        worldEntities
 
--- applySystem : List Component.Key -> (Entity -> Entity) -> Dict Int Entity -> Dict Int Entity
--- applySystem keysRequired system entities =
---     entities
---         |> Dict.foldl
---             (\key entity worldEntities ->
---                 if List.all (\componentKey -> Dict.member componentKey entity.components) keysRequired then
---                     let
---                         _ =
---                             Debug.log "entity tag: " entity.tag
---                     in
---                     Dict.update key
---                         (\_ -> Just (system entity))
---                         worldEntities
---                 else
---                     worldEntities
---             )
---             entities
+                else
+                    worldEntities
+            )
+            entities
+
+
+
 -- accrueActions : List Component.Key -> (Entity -> System.Action) -> Dict Int Entity -> List System.Action
 -- accrueActions keysRequired system entities =
 --     entities

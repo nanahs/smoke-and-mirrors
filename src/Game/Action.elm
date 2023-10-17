@@ -1,4 +1,4 @@
-module Game.Action exposing (Action(..), isSpawnBullet)
+port module Game.Action exposing (Action(..), isSpawnBullet)
 
 import Vector2 exposing (Vector2)
 
@@ -16,3 +16,9 @@ isSpawnBullet action =
 
         NoOp ->
             False
+
+
+port requestAction : Action -> Cmd msg
+
+
+port recievedAction : (Action -> msg) -> Sub msg

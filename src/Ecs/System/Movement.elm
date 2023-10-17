@@ -1,25 +1,26 @@
 module Ecs.System.Movement exposing (movement)
 
 import AssocSet exposing (Set)
-import Dict exposing (Dict)
-import Ecs.Component as Component exposing (Component)
+import Ecs.Component exposing (Components)
+import Ecs.Component.PlayerInput exposing (PlayerInput(..))
+import Ecs.Component.Velocity exposing (Velocity(..))
 import Input exposing (Input)
 
 
 movement :
     Set Input
-    -> { x | components : Dict Component.Key Component }
-    -> { x | components : Dict Component.Key Component }
+    -> { x | components : Components }
+    -> { x | components : Components }
 movement inputs entity =
-    case ( Dict.get Component.velKey entity.components, Dict.get Component.movementKey entity.components ) of
-        ( Just (Component.Velocity speed _), Just Component.Movement ) ->
+    case ( entity.components.velocity, entity.components.playerInput ) of
+        ( Just (Velocity speed _), Just (PlayerInput _) ) ->
+            let
+                comp =
+                    entity.components
+            in
             { entity
                 | components =
-                    Dict.update Component.velKey
-                        (\_ ->
-                            Just (Component.Velocity speed (Input.applyInputs inputs))
-                        )
-                        entity.components
+                    { comp | velocity = Just (Velocity speed (Input.applyInputs inputs)) }
             }
 
         _ ->
